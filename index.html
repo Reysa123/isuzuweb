@@ -1,121 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Sedang Memuat...</title>
+    <title>Login Supabase</title>
+    <!-- Load Supabase SDK -->
+    <script src="https://jsdelivr.net"></script>
     <style>
-        /* Gaya dasar untuk mereset margin dan menengahkan konten */
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #f4f4f9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* Animasi Spinner Loading */
-        .loader {
-            border: 8px solid #e5e5e5;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Teks Timer */
-        #countdown {
-            font-size: 1.5rem;
-            color: #333;
-            font-weight: bold;
-        }
-
-        #loading-text {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        /* Konten utama disembunyikan di awal */
-        #main-content {
-            display: none;
-            text-align: center;
-            animation: fadeIn 1s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Container untuk layar loading */
-        #loading-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 100px; }
+        .container { max-width: 400px; width: 100%; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .toggle-btn { background: none; color: #007bff; border: none; cursor: pointer; text-decoration: underline; margin-top: 10px; width: auto;}
     </style>
 </head>
 <body>
 
-    <!-- Layar Loading -->
-    <div id="loading-screen">
-        <div class="loader"></div>
-        <div id="loading-text">Mohon tunggu, sedang memuat data...</div>
-        <div id="countdown">05:00</div>
-    </div>
+<div class="container">
+    <h2 id="form-title">Login</h2>
+    <form id="auth-form">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Kata Sandi" required>
+        <button type="submit" id="submit-btn">Masuk</button>
+    </form>
+    <button class="toggle-btn" onclick="toggleMode()">Belum punya akun? Daftar</button>
+    <p id="message"></p>
+</div>
 
-    <!-- Konten Utama (Muncul setelah 5 menit) -->
-    <div id="main-content">
-        <h1>Selesai!</h1>
-        <p>Proses memuat selama 5 menit telah berhasil.</p>
-    </div>
+<script>
+    // 1. Inisialisasi Supabase (Ganti URL dan Anon Key Anda di sini)
+    const SUPABASE_URL = 'https://ISI_URL_SUPABASE_ANDA.supabase.co';
+    const SUPABASE_ANON_KEY = 'ISI_ANON_KEY_ANDA_DI_SINI';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <script>
-        // Set waktu 5 menit dalam satuan detik (5 * 60)
-        let timeLeft = 300; 
-        
-        const countdownElement = document.getElementById('countdown');
-        const loadingScreen = document.getElementById('loading-screen');
-        const mainContent = document.getElementById('main-content');
+    let isLogin = true;
 
-        // Jalankan fungsi setiap 1000 milidetik (1 detik)
-        const timer = setInterval(() => {
-            timeLeft--;
+    function toggleMode() {
+        isLogin = !isLogin;
+        document.getElementById('form-title').textContent = isLogin ? 'Login' : 'Daftar';
+        document.getElementById('submit-btn').textContent = isLogin ? 'Masuk' : 'Daftar';
+        document.querySelector('.toggle-btn').textContent = isLogin ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Login';
+    }
 
-            // Hitung menit dan detik yang tersisa
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageEl = document.getElementById('message');
 
-            // Tambahkan angka 0 di depan jika di bawah 10 (contoh: 04:09)
-            let formattedTime = 
-                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
-                (seconds < 10 ? "0" + seconds : seconds);
-
-            // Update teks di HTML
-            countdownElement.textContent = formattedTime;
-
-            // Jika waktu sudah habis (mencapai 0)
-            if (timeLeft <= 0) {
-                clearInterval(timer); // Hentikan timer
-                
-                // Opsi 1: Sembunyikan loading, tampilkan konten utama di halaman yang sama
-                loadingScreen.style.display = 'none';
-                mainContent.style.display = 'block';
-
-                // Opsi 2: Jika kamu ingin pindah ke halaman HTML lain, hapus komentar pada baris di bawah ini:
-               window.location.href = "indexb.html";
+        if (isLogin) {
+            // Proses Login
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) messageEl.textContent = 'Error: ' + error.message;
+            else {
+                messageEl.style.color = 'green';
+                messageEl.textContent = 'Login berhasil! Mengalihkan...';
+                // Arahkan ke halaman dashboard atau index setelah login berhasil
             }
-        }, 1000); 
-    </script>
+        } else {
+            // Proses Registrasi
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) messageEl.textContent = 'Error: ' + error.message;
+            else {
+                messageEl.style.color = 'green';
+                messageEl.textContent = 'Daftar berhasil! Silakan cek email untuk verifikasi.';
+            }
+        }
+    });
+</script>
+
 </body>
-</html>
+</html><!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Supabase</title>
+    <!-- Load Supabase SDK -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 100px; }
+        .container { max-width: 400px; width: 100%; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .toggle-btn { background: none; color: #007bff; border: none; cursor: pointer; text-decoration: underline; margin-top: 10px; width: auto;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="form-title">Login</h2>
+    <form id="auth-form">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Kata Sandi" required>
+        <button type="submit" id="submit-btn">Masuk</button>
+    </form>
+    <button class="toggle-btn" onclick="toggleMode()">Belum punya akun? Daftar</button>
+    <p id="message"></p>
+</div>
+
+<script>
+    // 1. Inisialisasi Supabase (Ganti URL dan Anon Key Anda di sini)
+    const SUPABASE_URL = 'https://ISI_URL_SUPABASE_ANDA.supabase.co';
+    const SUPABASE_ANON_KEY = 'ISI_ANON_KEY_ANDA_DI_SINI';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let isLogin = true;
+
+    function toggleMode() {
+        isLogin = !isLogin;
+        document.getElementById('form-title').textContent = isLogin ? 'Login' : 'Daftar';
+        document.getElementById('submit-btn').textContent = isLogin ? 'Masuk' : 'Daftar';
+        document.querySelector('.toggle-btn').textContent = isLogin ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Login';
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageEl = document.getElementById('message');
+
+        if (isLogin) {
+            // Proses Login
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) messageEl.textContent = 'Error: ' + error.message;
+            else {
+                messageEl.style.color = 'green';
+                messageEl.textContent = 'Login berhasil! Mengalihkan...';
+                // Arahkan ke halaman dashboard atau index setelah login berhasil
+            }
+        } else {
+            // Proses Registrasi
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) messageEl.textContent = 'Error: ' + error.message;
+            else {
+                messageEl.style.color = 'green';
+                messageEl.textContent = 'Daftar berhasil! Silakan cek email untuk verifikasi.';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>            // Jika waktu sudah habis (mencapai 0)
+
